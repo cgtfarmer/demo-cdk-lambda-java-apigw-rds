@@ -1,15 +1,26 @@
 package com.cgtfarmer.demo.repository;
 
+import com.cgtfarmer.demo.config.JdbcConfiguration;
 import com.cgtfarmer.demo.entity.UserEntity;
-import java.sql.Connection;
+import com.cgtfarmer.demo.factory.JdbcConnectionFactory;
+
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Optional;
 
 public class UserRepository {
 
-  private final Connection connection;
+  private final JdbcConnectionFactory jdbcConnectionFactory;
+  private final JdbcConfiguration jdbcConfiguration;
 
-  public UserRepository(Connection connection) {
-    this.connection = connection;
+  public UserRepository(
+    JdbcConnectionFactory jdbcConnectionFactory,
+    JdbcConfiguration jdbcConfiguration
+  ) {
+    this.jdbcConnectionFactory = jdbcConnectionFactory;
+    this.jdbcConfiguration = jdbcConfiguration;
   }
 
   public List<UserEntity> findAll() {
@@ -20,9 +31,30 @@ public class UserRepository {
       FROM users
     """;
 
-    // const results: UserEntity[] = await this.dbClient.executeStatement(sql);
+    try (
+      Connection connection = this.jdbcConnectionFactory.create(this.jdbcConfiguration);
+      Statement statement = connection.createStatement()
+    ) {
+      ResultSet rs = statement.executeQuery(sql);
 
-    return null;
+      List<UserEntity> users = new ArrayList<>();
+
+      while(rs.next()) {
+        UserEntity user = UserEntity.builder()
+          .id(rs.getInt("id"))
+          .age(rs.getInt("age"))
+          .first_name(rs.getString("first_name"))
+          .last_name(rs.getString("last_name"))
+          .weight(rs.getFloat("weight"))
+          .smoker(rs.getBoolean("smoker"))
+          .build();
+        users.add(user);
+      }
+
+      return users;
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public UserEntity findById(int id) {
@@ -31,14 +63,31 @@ public class UserRepository {
     String sql = """
       SELECT *
       FROM users
-      WHERE id = $1
+      WHERE id = ?
     """;
 
-    // const values = [String(id)];
+    try (
+      Connection connection = this.jdbcConnectionFactory.create(this.jdbcConfiguration);
+      PreparedStatement statement = connection.prepareStatement(sql)
+    ) {
+      statement.setInt(1, id);
+      ResultSet rs = statement.executeQuery();
 
-    // const results: UserEntity[] = await this.dbClient.executeStatementWithParams(sql, values);
+      if (rs != null && rs.next()) {
+        return UserEntity.builder()
+          .id(rs.getInt("id"))
+          .age(rs.getInt("age"))
+          .first_name(rs.getString("first_name"))
+          .last_name(rs.getString("last_name"))
+          .weight(rs.getFloat("weight"))
+          .smoker(rs.getBoolean("smoker"))
+          .build();
+      }
 
-    return null;
+      throw new RuntimeException("User not found(id=" + id + ")");
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public UserEntity create(UserEntity user) {
@@ -46,23 +95,26 @@ public class UserRepository {
 
     String sql = """
       INSERT INTO users (first_name, last_name, age, weight, smoker)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
+      VALUES (?, ?, ?, ?, ?)
     """;
+//      RETURNING id
+//    """;
 
-    // const values = [
-    //   user.first_name,
-    //   user.last_name,
-    //   String(user.age),
-    //   String(user.weight),
-    //   String(user.smoker),
-    // ];
+    try (
+      Connection connection = this.jdbcConnectionFactory.create(this.jdbcConfiguration);
+      PreparedStatement statement = connection.prepareStatement(sql)
+    ) {
+      statement.setString(1, user.getFirst_name());
+      statement.setString(2, user.getLast_name());
+      statement.setInt(3, user.getAge());
+      statement.setFloat(4, user.getWeight());
+      statement.setBoolean(5, user.isSmoker());
+      statement.executeUpdate();
 
-    // const results: UserEntity[] = await this.dbClient.executeStatementWithParams(sql, values);
-
-    // user.id = results[0].id;
-
-    return null;
+      return user;
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public UserEntity update(UserEntity user) {
@@ -70,26 +122,41 @@ public class UserRepository {
 
     String sql = """
       UPDATE users
-      SET first_name = $1,
-          last_name = $2,
-          age = $3,
-          weight = $4,
-          smoker = $5
-      WHERE id = $6
+      SET first_name = ?,
+          last_name = ?,
+          age = ?,
+          weight = ?,
+          smoker = ?
+      WHERE id = ?
     """;
 
-    // const values = [
-    //   user.first_name,
-    //   user.last_name,
-    //   String(user.age),
-    //   String(user.weight),
-    //   String(user.smoker),
-    //   String(user.id)
-    // ];
+    try (
+      Connection connection = this.jdbcConnectionFactory.create(this.jdbcConfiguration);
+      PreparedStatement statement = connection.prepareStatement(sql)
+    ) {
+      statement.setString(1, user.getFirst_name());
+      statement.setString(2, user.getLast_name());
+      statement.setInt(3, user.getAge());
+      statement.setFloat(4, user.getWeight());
+      statement.setBoolean(5, user.isSmoker());
+      statement.setInt(6, user.getId());
+      ResultSet rs = statement.executeQuery();
 
-    // await this.dbClient.executeStatementWithParams(sql, values);
+      if (rs != null && rs.next()) {
+        return UserEntity.builder()
+          .id(rs.getInt("id"))
+          .age(rs.getInt("age"))
+          .first_name(rs.getString("first_name"))
+          .last_name(rs.getString("last_name"))
+          .weight(rs.getFloat("weight"))
+          .smoker(rs.getBoolean("smoker"))
+          .build();
+      }
 
-    return null;
+      throw new RuntimeException("User not found(id=" + user.getId() + ")");
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void destroy(int id) {
@@ -97,11 +164,23 @@ public class UserRepository {
 
     String sql = """
       DELETE FROM users
-      WHERE id = $1
+      WHERE id = ?
     """;
 
-    // const values = [String(id)];
+    try (
+      Connection connection = this.jdbcConnectionFactory.create(this.jdbcConfiguration);
+      PreparedStatement statement = connection.prepareStatement(sql)
+    ) {
+      statement.setInt(1, id);
+      int result = statement.executeUpdate();
 
-    // await this.dbClient.executeStatementWithParams(sql, values);
+      if (result > 0) {
+        return;
+      }
+
+      throw new RuntimeException("User not found(id=" + id + ")");
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

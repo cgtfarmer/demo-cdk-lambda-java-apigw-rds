@@ -21,17 +21,21 @@ public class JdbcConfigFactory {
   }
 
   public JdbcConfiguration create() throws InterruptedException, IOException {
-    String awsSessionToken = this.environmentAccessor.get("AWS_SESSION_TOKEN");
-    String credsSecretId = this.environmentAccessor.get("DB_CREDS_SECRET_ID");
-
-    DbSecret dbSecret = this.secretAccessor.getDbSecret(awsSessionToken, credsSecretId);
+//    String awsSessionToken = this.environmentAccessor.get("AWS_SESSION_TOKEN");
+//    String credsSecretId = this.environmentAccessor.get("DB_CREDS_SECRET_ID");
+//
+//    DbSecret dbSecret = this.secretAccessor.getDbSecret(awsSessionToken, credsSecretId);
 
     String jdbcUrl = this.environmentAccessor.get("DB_JDBC_URL");
+    String username = this.environmentAccessor.get("DB_USERNAME");
+    String password = this.environmentAccessor.get("DB_PASSWORD");
 
     return JdbcConfiguration.builder()
         .url(jdbcUrl)
-        .username(dbSecret.getUsername())
-        .password(dbSecret.getPassword())
+        .username(username)
+        .password(password)
+//        .username(dbSecret.getUsername())
+//        .password(dbSecret.getPassword())
         .build();
   }
 }

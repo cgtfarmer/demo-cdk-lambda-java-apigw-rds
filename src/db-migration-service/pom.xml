@@ -109,6 +109,15 @@
            <target>17</target>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <mainClass>com.cgtfarmer.demo.Main</mainClass>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>

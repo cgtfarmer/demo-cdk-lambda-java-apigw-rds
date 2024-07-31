@@ -21,19 +21,29 @@ public class LiquibaseConfigFactory {
   }
 
   public LiquibaseConfiguration create() throws InterruptedException, IOException {
-    String awsSessionToken = this.environmentAccessor.get("AWS_SESSION_TOKEN");
-    String credsSecretId = this.environmentAccessor.get("DB_CREDS_SECRET_ID");
-
-    DbSecret dbSecret = this.secretAccessor.getDbSecret(awsSessionToken, credsSecretId);
-
+    String dbUsername = this.environmentAccessor.get("DB_USERNAME");
+    String dbPassword = this.environmentAccessor.get("DB_PASSWORD");
     String jdbcUrl = this.environmentAccessor.get("DB_JDBC_URL");
     String changelogFilepath = this.environmentAccessor.get("DB_CHANGELOG_FILE");
 
+    if (dbUsername != null && dbPassword != null) {
+      return LiquibaseConfiguration.builder()
+          .url(jdbcUrl)
+          .username(dbUsername)
+          .password(dbPassword)
+          .changelogFilepath(changelogFilepath)
+          .build();
+    }
+
+    String awsSessionToken = this.environmentAccessor.get("AWS_SESSION_TOKEN");
+    String credsSecretId = this.environmentAccessor.get("DB_CREDS_SECRET_ID");
+    DbSecret dbSecret = this.secretAccessor.getDbSecret(awsSessionToken, credsSecretId);
+
     return LiquibaseConfiguration.builder()
-        .url(jdbcUrl)
-        .username(dbSecret.getUsername())
-        .password(dbSecret.getPassword())
-        .changelogFilepath(changelogFilepath)
-        .build();
+      .url(jdbcUrl)
+      .username(dbSecret.getUsername())
+      .password(dbSecret.getPassword())
+      .changelogFilepath(changelogFilepath)
+      .build();
   }
 }

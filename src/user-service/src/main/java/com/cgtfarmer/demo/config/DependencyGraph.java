@@ -52,9 +52,9 @@ public class DependencyGraph {
         secretAccessor
     ).create();
 
-    Connection connection = new JdbcConnectionFactory().create(jdbcConfiguration);
+//    Connection connection = new JdbcConnectionFactory().create(jdbcConfiguration);
 
-    UserRepository userRepository = new UserRepository(connection);
+    UserRepository userRepository = new UserRepository(new JdbcConnectionFactory(), jdbcConfiguration);
 
     UserMapper userMapper = new UserMapper(objectMapper);
 
