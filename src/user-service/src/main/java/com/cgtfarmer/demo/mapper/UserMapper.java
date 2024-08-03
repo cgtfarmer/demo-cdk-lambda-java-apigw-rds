@@ -1,6 +1,6 @@
 package com.cgtfarmer.demo.mapper;
 
-import com.cgtfarmer.demo.entity.UserEntity;
+import com.cgtfarmer.demo.dto.UserEntity;
 import com.cgtfarmer.demo.model.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

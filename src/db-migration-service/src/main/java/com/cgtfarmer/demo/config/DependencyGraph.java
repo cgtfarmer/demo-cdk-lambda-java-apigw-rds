@@ -3,8 +3,11 @@ package com.cgtfarmer.demo.config;
 import com.cgtfarmer.demo.accessor.EnvironmentAccessor;
 import com.cgtfarmer.demo.accessor.LambdaParameterSecretClient;
 import com.cgtfarmer.demo.accessor.SecretAccessor;
+import com.cgtfarmer.demo.exception.LiquibaseConfigCreationException;
 import com.cgtfarmer.demo.factory.LiquibaseClientFactory;
 import com.cgtfarmer.demo.factory.LiquibaseConfigFactory;
+import com.cgtfarmer.demo.factory.LocalLiquibaseConfigFactory;
+import com.cgtfarmer.demo.factory.DeployedLiquibaseConfigFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -24,7 +27,8 @@ public class DependencyGraph {
   private static DependencyGraph singleton;
 
   public static DependencyGraph getInstance()
-      throws DatabaseException, InterruptedException, IOException, SQLException {
+      throws DatabaseException, InterruptedException, IOException,
+      LiquibaseConfigCreationException, SQLException {
 
     if (!Objects.isNull(singleton)) return singleton;
 
@@ -39,15 +43,18 @@ public class DependencyGraph {
     LambdaParameterSecretClient lambdaParameterSecretClient =
         new LambdaParameterSecretClient(httpClient, objectMapper);
 
-    SecretAccessor secretAccessor = new SecretAccessor(
-        objectMapper,
-        lambdaParameterSecretClient
-    );
+    String environment = environmentAccessor.get("ENV");
 
-    LiquibaseConfiguration liquibaseConfiguration = new LiquibaseConfigFactory(
-        environmentAccessor,
-        secretAccessor
-    ).create();
+    LiquibaseConfigFactory liquibaseConfigFactory = null;
+    if ("local".equalsIgnoreCase(environment)) {
+      liquibaseConfigFactory = new LocalLiquibaseConfigFactory(environmentAccessor);
+    } else {
+      SecretAccessor secretAccessor = new SecretAccessor(objectMapper, lambdaParameterSecretClient);
+
+      liquibaseConfigFactory = new DeployedLiquibaseConfigFactory(environmentAccessor, secretAccessor);
+    }
+
+    LiquibaseConfiguration liquibaseConfiguration = liquibaseConfigFactory.create();
 
     Liquibase liquibaseClient = new LiquibaseClientFactory().create(liquibaseConfiguration);
 

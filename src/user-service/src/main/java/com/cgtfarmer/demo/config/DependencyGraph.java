@@ -4,17 +4,20 @@ import com.cgtfarmer.demo.accessor.EnvironmentAccessor;
 import com.cgtfarmer.demo.accessor.LambdaParameterSecretClient;
 import com.cgtfarmer.demo.accessor.SecretAccessor;
 import com.cgtfarmer.demo.controller.UserController;
+import com.cgtfarmer.demo.exception.JdbcConfigCreationException;
 import com.cgtfarmer.demo.factory.JdbcConnectionFactory;
+import com.cgtfarmer.demo.factory.LocalJdbcConfigFactory;
+import com.cgtfarmer.demo.mapper.UserEntityMapper;
 import com.cgtfarmer.demo.mapper.UserMapper;
-import com.cgtfarmer.demo.repository.UserRepository;
+import com.cgtfarmer.demo.repository.UserEntityRepository;
 import com.cgtfarmer.demo.service.UserService;
+import com.cgtfarmer.demo.factory.DeployedJdbcConfigFactory;
 import com.cgtfarmer.demo.factory.JdbcConfigFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.net.http.HttpClient;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import lombok.Builder;
@@ -27,7 +30,7 @@ public class DependencyGraph {
   private static DependencyGraph singleton;
 
   public static DependencyGraph getInstance()
-      throws InterruptedException, IOException, SQLException {
+      throws InterruptedException, IOException, JdbcConfigCreationException, SQLException {
 
     if (!Objects.isNull(singleton)) return singleton;
 
@@ -42,19 +45,24 @@ public class DependencyGraph {
     LambdaParameterSecretClient lambdaParameterSecretClient =
         new LambdaParameterSecretClient(httpClient, objectMapper);
 
-    SecretAccessor secretAccessor = new SecretAccessor(
-        objectMapper,
-        lambdaParameterSecretClient
-    );
+    String environment = environmentAccessor.get("ENV");
 
-    JdbcConfiguration jdbcConfiguration = new JdbcConfigFactory(
-        environmentAccessor,
-        secretAccessor
-    ).create();
+    JdbcConfigFactory jdbcConfigFactory = null;
+    if ("local".equalsIgnoreCase(environment)) {
+      jdbcConfigFactory = new LocalJdbcConfigFactory(environmentAccessor);
+    } else {
+      SecretAccessor secretAccessor = new SecretAccessor(objectMapper, lambdaParameterSecretClient);
 
-//    Connection connection = new JdbcConnectionFactory().create(jdbcConfiguration);
+      jdbcConfigFactory = new DeployedJdbcConfigFactory(environmentAccessor, secretAccessor);
+    }
 
-    UserRepository userRepository = new UserRepository(new JdbcConnectionFactory(), jdbcConfiguration);
+    JdbcConfiguration jdbcConfiguration = jdbcConfigFactory.create();
+
+    JdbcConnectionFactory jdbcConnectionFactory = new JdbcConnectionFactory(jdbcConfiguration);
+
+    UserEntityMapper userEntityMapper = new UserEntityMapper();
+
+    UserEntityRepository userRepository = new UserEntityRepository(jdbcConnectionFactory, userEntityMapper);
 
     UserMapper userMapper = new UserMapper(objectMapper);
 

@@ -1,4 +1,4 @@
-package com.cgtfarmer.demo.entity;
+package com.cgtfarmer.demo.dto;
 
 import lombok.Builder;
 import lombok.Data;

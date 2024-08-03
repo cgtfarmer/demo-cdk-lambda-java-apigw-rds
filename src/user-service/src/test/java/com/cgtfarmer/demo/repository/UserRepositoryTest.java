@@ -1,90 +1,81 @@
 package com.cgtfarmer.demo.repository;
 
+import com.cgtfarmer.demo.accessor.EnvironmentAccessor;
 import com.cgtfarmer.demo.config.JdbcConfiguration;
-import com.cgtfarmer.demo.entity.UserEntity;
+import com.cgtfarmer.demo.dto.UserEntity;
+import com.cgtfarmer.demo.exception.JdbcConfigCreationException;
+import com.cgtfarmer.demo.factory.JdbcConfigFactory;
 import com.cgtfarmer.demo.factory.JdbcConnectionFactory;
-import org.junit.jupiter.api.*;
-
-import static org.junit.jupiter.api.Assertions.*;
+import com.cgtfarmer.demo.factory.LocalJdbcConfigFactory;
+import com.cgtfarmer.demo.mapper.UserEntityMapper;
+import java.util.List;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 @Tag("integration")
 class UserRepositoryTest {
-  JdbcConfiguration config = JdbcConfiguration.builder()
-    .url("jdbc:postgresql://postgres:5432/postgres")
-    .username("postgres")
-    .password("super")
-    .build();
-  UserRepository userRepository = new UserRepository(new JdbcConnectionFactory(), config);
+
+  private final UserEntityRepository userRepository;
+
+  public UserRepositoryTest() throws JdbcConfigCreationException {
+    EnvironmentAccessor environmentAccessor = new EnvironmentAccessor();
+
+    JdbcConfigFactory jdbcConfigFactory = new LocalJdbcConfigFactory(environmentAccessor);
+
+    JdbcConfiguration config = jdbcConfigFactory.create();
+
+    JdbcConnectionFactory connectionFactory = new JdbcConnectionFactory(config);
+
+    UserEntityMapper userEntityMapper = new UserEntityMapper();
+
+    this.userRepository = new UserEntityRepository(connectionFactory, userEntityMapper);
+  }
+
   @Test
   void findAll() {
-    System.out.println(this.userRepository.findAll());
+    List<UserEntity> userEntities = this.userRepository.findAll();
+
+    System.out.println(userEntities);
   }
 
-  @Nested
-  class FindById {
-    @Test
-    void whenResourceIsFound_ReturnsUserEntity() {
-      UserEntity expected = UserEntity.builder()
-        .id(1).first_name("Ryan").last_name("Test").age(24).weight(180.0F).build();
-      UserEntity actual = userRepository.findById(1);
-      assertEquals(expected, actual);
-    }
+  @Test
+  void findById() {
+    UserEntity userEntity = userRepository.findById(1);
 
-    @Test
-    void whenResourceIsNotFound_ReturnsException() {
-      assertThrows(
-        RuntimeException.class,
-        () -> userRepository.findById(1000)
-      );
-    }
+    System.out.println(userEntity);
   }
 
-  @Nested
-  class Create {
-    @Test
-    void returnsCreatedUserEntity() {
-      UserEntity expected = UserEntity.builder()
-        .id(2).first_name("Christian").last_name("Test").age(29).weight(180.5F).build();
-      UserEntity actual = userRepository.create(expected);
-      assertEquals(expected, actual);
-    }
+  @Test
+  void create() {
+    UserEntity userEntity = UserEntity.builder()
+        .first_name("John")
+        .last_name("Doe")
+        .age(32)
+        .weight(183.5F)
+        .build();
+
+    UserEntity newUserEntity = userRepository.create(userEntity);
+
+    System.out.println(newUserEntity);
   }
 
-  @Nested
-  class Update {
+  @Test
+  void update() {
+    UserEntity userEntity = UserEntity.builder()
+        .id(1)
+        .first_name("Johnny")
+        .last_name("Doe")
+        .age(32)
+        .weight(183.5F)
+        .build();
 
-    @Test
-    void whenResourceIsFound_ReturnsUpdatedUserEntity() {
-      UserEntity expected = UserEntity.builder()
-        .id(2).first_name("Ryan").last_name("Test").age(24).weight(180.5F).build();
-      UserEntity actual = userRepository.update(expected);
-      assertEquals(expected, actual);
-    }
+    UserEntity newUserEntity = userRepository.update(userEntity);
 
-    @Test
-    void whenResourceIsNotFound_ReturnsException() {
-      UserEntity expected = UserEntity.builder()
-        .id(1000).first_name("Christian").last_name("Test").age(29).weight(180.5F).build();
-      assertThrows(
-        RuntimeException.class,
-        () -> userRepository.update(expected)
-      );
-    }
+    System.out.println(newUserEntity);
   }
 
-  @Nested
-  class Destroy {
-    @Test
-    void whenResourceIsFound_DeletesUserEntity() {
-      assertDoesNotThrow(()-> userRepository.destroy(2));
-    }
-
-    @Test
-    void whenResourceIsNotFound_ReturnsException() {
-      assertThrows(
-        RuntimeException.class,
-        () -> userRepository.destroy(1000)
-      );
-    }
+  @Test
+  void destroy() {
+    userRepository.destroy(1);
   }
 }

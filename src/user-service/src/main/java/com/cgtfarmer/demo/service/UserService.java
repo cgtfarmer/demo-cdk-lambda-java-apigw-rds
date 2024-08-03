@@ -1,19 +1,19 @@
 package com.cgtfarmer.demo.service;
 
-import com.cgtfarmer.demo.entity.UserEntity;
+import com.cgtfarmer.demo.dto.UserEntity;
 import com.cgtfarmer.demo.mapper.UserMapper;
 import com.cgtfarmer.demo.model.User;
-import com.cgtfarmer.demo.repository.UserRepository;
+import com.cgtfarmer.demo.repository.UserEntityRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class UserService {
 
-  private final UserRepository userRepository;
+  private final UserEntityRepository userRepository;
 
   private final UserMapper userMapper;
 
-  public UserService(UserRepository userRepository, UserMapper userMapper) {
+  public UserService(UserEntityRepository userRepository, UserMapper userMapper) {
     this.userRepository = userRepository;
     this.userMapper = userMapper;
   }

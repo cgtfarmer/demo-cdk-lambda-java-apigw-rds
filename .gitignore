@@ -64,3 +64,4 @@ notes.txt
 .DS_Store
 
 src/db-migration-service/target
+src/user-service/target

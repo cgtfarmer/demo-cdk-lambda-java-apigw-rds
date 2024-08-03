@@ -7,15 +7,17 @@ import java.sql.SQLException;
 
 public class JdbcConnectionFactory {
 
-  public Connection create(JdbcConfiguration jdbcConfiguration)
-      throws SQLException {
+  private final JdbcConfiguration configuration;
 
-    Connection connection = DriverManager.getConnection(
-        jdbcConfiguration.getUrl(),
-        jdbcConfiguration.getUsername(),
-        jdbcConfiguration.getPassword()
+  public JdbcConnectionFactory(JdbcConfiguration configuration) {
+    this.configuration = configuration;
+  }
+
+  public Connection create() throws SQLException {
+    return DriverManager.getConnection(
+        configuration.getUrl(),
+        configuration.getUsername(),
+        configuration.getPassword()
     );
-
-    return connection;
   }
 }
