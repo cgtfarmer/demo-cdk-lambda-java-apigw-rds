@@ -13,11 +13,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("integration")
-class UserRepositoryTest {
+class UserEntityRepositoryTest {
 
   private final UserEntityRepository userRepository;
 
-  public UserRepositoryTest() throws JdbcConfigCreationException {
+  public UserEntityRepositoryTest() throws JdbcConfigCreationException {
     EnvironmentAccessor environmentAccessor = new EnvironmentAccessor();
 
     JdbcConfigFactory jdbcConfigFactory = new LocalJdbcConfigFactory(environmentAccessor);
@@ -40,7 +40,7 @@ class UserRepositoryTest {
 
   @Test
   void findById() {
-    UserEntity userEntity = userRepository.findById(1);
+    UserEntity userEntity = this.userRepository.findById(1);
 
     System.out.println(userEntity);
   }
@@ -54,7 +54,7 @@ class UserRepositoryTest {
         .weight(183.5F)
         .build();
 
-    UserEntity newUserEntity = userRepository.create(userEntity);
+    UserEntity newUserEntity = this.userRepository.create(userEntity);
 
     System.out.println(newUserEntity);
   }
@@ -69,13 +69,13 @@ class UserRepositoryTest {
         .weight(183.5F)
         .build();
 
-    UserEntity newUserEntity = userRepository.update(userEntity);
+    UserEntity newUserEntity = this.userRepository.update(userEntity);
 
     System.out.println(newUserEntity);
   }
 
   @Test
   void destroy() {
-    userRepository.destroy(1);
+    this.userRepository.destroy(1);
   }
 }

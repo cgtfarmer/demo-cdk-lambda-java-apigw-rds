@@ -45,7 +45,7 @@ export class ApiStack extends Stack {
           command: [
             '/bin/sh',
             '-c',
-           'mvn clean install && cp /asset-input/target/demo-cdk-lambda-java-0.0.1.jar /asset-output/'
+           'mvn clean install -Dmaven.test.skip=true && cp /asset-input/target/demo-cdk-lambda-java-0.0.1.jar /asset-output/'
           ],
           // Mounting local ~/.m2 repo to avoid re-downloading all the dependencies
           volumes: [

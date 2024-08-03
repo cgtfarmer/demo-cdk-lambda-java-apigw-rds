@@ -65,3 +65,5 @@ notes.txt
 
 src/db-migration-service/target
 src/user-service/target
+src/db-migration-service/bin
+src/user-service/bin
